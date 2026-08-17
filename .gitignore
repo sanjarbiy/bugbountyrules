@@ -1,0 +1,17 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# restructure verification artifact
+.no-loss-snapshot.txt
+
+# Never commit operator secrets/config (this repo ships none — defensive for forks)
+.env
+.env.*
+*.key
+config.json
+config.toml
+ai-keys/
+interesting_findings.json
