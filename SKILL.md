@@ -12,7 +12,7 @@ description: >
   tracks coverage so nothing is re-tested or skipped, diagnoses failed tooling from
   full logs, and hunts at maximum effort with intelligent token use until the goal is found.
   Activates and follows instructions in ANY language the operator writes in (the skill itself is
-  English). Bundles a deep per-class web-exploitation KB (portswigger-kb), a real-world writeup library, and PayloadsAllTheThings.
+  English). Bundles a per-class web-exploitation KB, a writeup library, and PayloadsAllTheThings.
 ---
 
 # THE PREDATOR
