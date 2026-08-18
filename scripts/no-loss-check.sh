@@ -7,7 +7,7 @@
 # restructure must still be present somewhere in the skill afterwards.
 #
 #   ./scripts/no-loss-check.sh snapshot          # before you touch anything
-#   ./scripts/no-loss-check.sh verify            # after — lists anything lost
+#   ./scripts/no-loss-check.sh verify            # after - lists anything lost
 #
 # Comparison is on normalised content lines (whitespace collapsed, markdown
 # emphasis stripped) so reflowing a paragraph does not raise a false alarm.
@@ -33,7 +33,7 @@ case "${1:-}" in
     echo "  snapshot: $(wc -l < "$SNAP") content lines from SKILL.md -> $SNAP"
     ;;
   verify)
-    [ -r "$SNAP" ] || { echo "no snapshot — run '$0 snapshot' first" >&2; exit 1; }
+    [ -r "$SNAP" ] || { echo "no snapshot - run '$0 snapshot' first" >&2; exit 1; }
     now="$(mktemp)"
     normalise "$SKILL_DIR/SKILL.md" "$SKILL_DIR"/reference/*.md \
               "$SKILL_DIR"/*.md > "$now"
@@ -43,7 +43,7 @@ case "${1:-}" in
     echo "  before : $(wc -l < "$SNAP") lines"
     echo "  now    : $(wc -l < "$now") lines (SKILL.md + every bundled .md)"
     if [ "$n_lost" -eq 0 ]; then
-      echo "  LOST   : 0 — nothing was dropped"
+      echo "  LOST   : 0 - nothing was dropped"
     else
       echo "  LOST   : $n_lost lines are in NO file any more:"
       printf '%s\n' "$lost" | head -40 | cut -c1-150 | sed 's/^/      /'

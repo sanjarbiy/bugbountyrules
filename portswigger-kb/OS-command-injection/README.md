@@ -1,6 +1,6 @@
-# OS command injection (shell injection) — topic overview & router
+# OS command injection (shell injection) - topic overview & router
 
-User input reaches an OS shell command unsanitized, so shell metacharacters let you run arbitrary commands as the app's user → typically **full server compromise** and pivot into the internal network. The highest-severity injection class.
+User input reaches an OS shell command unsanitized, so shell metacharacters let you run arbitrary commands as the app's user -> typically **full server compromise** and pivot into the internal network. The highest-severity injection class.
 
 ## 30-second quick reference
 
@@ -21,11 +21,11 @@ x||nslookup x.COLLAB||          # blind: OAST detection
 | Observation | Go to | Why |
 |---|---|---|
 | Command output reflected in response | [Basics](Basics/) | inline `|`/`&` + `whoami`, read output |
-| Output NOT reflected (feedback/email/async) | [Blind](Blind/) | time delay, output→file, OAST detect + exfil |
+| Output NOT reflected (feedback/email/async) | [Blind](Blind/) | time delay, output->file, OAST detect + exfil |
 
 ## Sub-technique folders
-- `Basics/` — in-band injection with reflected output (1 lab)
-- `Blind/` — time delays, output redirection to web root, OAST detection + DNS exfiltration (4 labs)
+- `Basics/` - in-band injection with reflected output (1 lab)
+- `Blind/` - time delays, output redirection to web root, OAST detection + DNS exfiltration (4 labs)
 
 ## Root cause
 App calls a shell (`system()`, backticks, `Runtime.exec` with a shell, `sh -c`) concatenating user input. Shell metacharacters (`& | ; \n` `` ` `` `$()`) break out of the intended command. If your input is quoted, close the quote first (`"`/`'`).
@@ -35,7 +35,7 @@ App calls a shell (`system()`, backticks, `Runtime.exec` with a shell, `sh -c`) 
 - Inject `& echo MARKER &` (reflected) or `||ping -c10 127.0.0.1||` (timing) / OAST. Append a trailing separator so the rest of the original command doesn't break yours.
 
 ## Chaining
-- → **RCE / full compromise** (this IS RCE); pivot to internal network (→ [SSRF](../SSRF/) territory).
+- -> **RCE / full compromise** (this IS RCE); pivot to internal network (-> [SSRF](../SSRF/) territory).
 - Reachable via other injections: [SSTI](../SSTI/), [Insecure-deserialization](../Insecure-deserialization/), [XXE](../XXE-injection/), SQLi stacked queries.
 - OAST toolkit shared with blind [SQLi OAST](../SQL-injection/Out-of-band-OAST/) and [SSRF Blind](../SSRF/Blind/).
 

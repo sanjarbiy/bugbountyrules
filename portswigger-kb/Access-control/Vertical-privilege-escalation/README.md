@@ -1,4 +1,4 @@
-# Access control — Vertical privilege escalation
+# Access control - Vertical privilege escalation
 
 Gain access to functions reserved for higher-privilege users (admin) as a low-priv/unauthenticated user. Routes: discover hidden admin URLs, flip a client-controlled role, or bypass an ACL that keys on URL/method/Referer. Max impact: full admin takeover.
 
@@ -30,7 +30,7 @@ The privileged function isn't protected server-side, or protection relies on: ob
 
 **Referer-based ACL bypass:** the admin action checks `Referer: .../admin`. Forge it (or note its absence is what blocks you) and replay with a low-priv session cookie.
 
-**Advanced / edge:** broken-link/old-endpoint admin functions; parameter-based role in JWT (→ [JWT-attacks](../../JWT-attacks/)); case/encoding tricks on the blocked path (`/Admin`, `/admin/`, `/%61dmin`).
+**Advanced / edge:** broken-link/old-endpoint admin functions; parameter-based role in JWT (-> [JWT-attacks](../../JWT-attacks/)); case/encoding tricks on the blocked path (`/Admin`, `/admin/`, `/%61dmin`).
 
 ## Payload arsenal
 ```
@@ -53,12 +53,12 @@ Referer: https://LAB-ID.web-security-academy.net/admin
 | Referer check | forge/strip Referer + low-priv cookie |
 
 ## Exploitation walkthrough (role via cookie)
-1. `/admin` → "not authorized". Login; intercept the response → `Set-Cookie: Admin=false`.
-2. Change to `Admin=true`; load `/admin` → panel renders.
-3. `GET /admin/delete?username=carlos` → solved.
+1. `/admin` -> "not authorized". Login; intercept the response -> `Set-Cookie: Admin=false`.
+2. Change to `Admin=true`; load `/admin` -> panel renders.
+3. `GET /admin/delete?username=carlos` -> solved.
 
 ## Chaining
-- ← Horizontal IDOR leaks admin creds → log in → here. → [Authentication](../../Authentication/).
+- <- Horizontal IDOR leaks admin creds -> log in -> here. -> [Authentication](../../Authentication/).
 
 ## Tools
 - **Burp Repeater**, "Change request method", **Autorize** (auto cross-role testing).
@@ -66,25 +66,25 @@ Referer: https://LAB-ID.web-security-academy.net/admin
 ## Labs
 
 ### Unprotected admin functionality [Apprentice]
-URL: .../lab-unprotected-admin-functionality — `/robots.txt` → `/administrator-panel`; delete carlos. Insight: obscurity ≠ access control.
+URL: .../lab-unprotected-admin-functionality - `/robots.txt` -> `/administrator-panel`; delete carlos. Insight: obscurity ≠ access control.
 
 ### Unprotected admin functionality with unpredictable URL [Apprentice]
-URL: .../lab-unprotected-admin-functionality-with-unpredictable-url — admin URL leaked in home-page JS; load it. Insight: client-side JS exposes "hidden" URLs.
+URL: .../lab-unprotected-admin-functionality-with-unpredictable-url - admin URL leaked in home-page JS; load it. Insight: client-side JS exposes "hidden" URLs.
 
 ### User role controlled by request parameter [Apprentice]
-URL: .../lab-user-role-controlled-by-request-parameter — login response sets `Admin=false` → set `true`. Insight: role stored in a client cookie.
+URL: .../lab-user-role-controlled-by-request-parameter - login response sets `Admin=false` -> set `true`. Insight: role stored in a client cookie.
 
 ### User role can be modified in user profile [Apprentice]
-URL: .../lab-user-role-can-be-modified-in-user-profile — add `"roleid":2` to the email-update JSON → escalated. Insight: mass-assignment of a privileged field.
+URL: .../lab-user-role-can-be-modified-in-user-profile - add `"roleid":2` to the email-update JSON -> escalated. Insight: mass-assignment of a privileged field.
 
 ### URL-based access control can be circumvented [Practitioner]
-URL: .../lab-url-based-access-control-can-be-circumvented — `X-Original-URL: /admin` (request line `/`); params in real query string. Insight: back-end trusts the rewritten URL header.
+URL: .../lab-url-based-access-control-can-be-circumvented - `X-Original-URL: /admin` (request line `/`); params in real query string. Insight: back-end trusts the rewritten URL header.
 
 ### Method-based access control can be circumvented [Practitioner]
-URL: .../lab-method-based-access-control-can-be-circumvented — promote-user `POST` blocked for non-admin; switch to `GET` → succeeds. Insight: ACL only enforced on POST.
+URL: .../lab-method-based-access-control-can-be-circumvented - promote-user `POST` blocked for non-admin; switch to `GET` -> succeeds. Insight: ACL only enforced on POST.
 
 ### Referer-based access control [Practitioner]
-URL: .../lab-referer-based-access-control — `/admin-roles?username=carlos&action=upgrade` with a forged `Referer: .../admin` + low-priv cookie. Insight: ACL keyed on a spoofable header.
+URL: .../lab-referer-based-access-control - `/admin-roles?username=carlos&action=upgrade` with a forged `Referer: .../admin` + low-priv cookie. Insight: ACL keyed on a spoofable header.
 
 Real-target transfer: enumerate privileged endpoints, then test discovery (robots/JS), client-role flips, and URL/method/Referer header bypasses as a low-priv user.
 

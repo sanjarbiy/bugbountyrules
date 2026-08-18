@@ -1,6 +1,6 @@
-# SQL injection — topic overview & router
+# SQL injection - topic overview & router
 
-Attacker-controlled input reaches a SQL query unparameterized. Impact ladder: read hidden rows → bypass auth → dump the whole DB (creds/PII) → in some stacks RCE / lateral movement via the DB host. This is the floor-to-ceiling injection class; master the decision flow, not just one payload.
+Attacker-controlled input reaches a SQL query unparameterized. Impact ladder: read hidden rows -> bypass auth -> dump the whole DB (creds/PII) -> in some stacks RCE / lateral movement via the DB host. This is the floor-to-ceiling injection class; master the decision flow, not just one payload.
 
 ## 30-second quick reference
 
@@ -14,9 +14,9 @@ admin'--               -> auth bypass (username field)
 ' UNION SELECT @@version--   -> fingerprint+exfil once cols known
 ```
 
-Fingerprint by what works: `@@version`=MySQL/MSSQL · `version()`=Postgres · `SELECT banner FROM v$version`=Oracle.
+Fingerprint by what works: `@@version`=MySQL/MSSQL - `version()`=Postgres - `SELECT banner FROM v$version`=Oracle.
 
-## Decision map — pick the sub-technique
+## Decision map - pick the sub-technique
 
 | Observation | Go to | Why |
 |---|---|---|
@@ -29,15 +29,15 @@ Fingerprint by what works: `@@version`=MySQL/MSSQL · `version()`=Postgres · `S
 | No content/error/time diff at all; query may be async | [Out-of-band-OAST](Out-of-band-OAST/) | DNS/HTTP exfil via Collaborator |
 | Payload blocked by WAF / different input format (XML/JSON) | [WAF-filter-bypass](WAF-filter-bypass/) | Encode keywords (XML entities, etc.) |
 
-Escalation ladder when blind: boolean → conditional error → time delay → OAST. Try in that order; OAST is most powerful and works when the rest fail.
+Escalation ladder when blind: boolean -> conditional error -> time delay -> OAST. Try in that order; OAST is most powerful and works when the rest fail.
 
-## Learning-path module coverage (0 → end)
+## Learning-path module coverage (0 -> end)
 Every module of the [SQL injection learning path](https://portswigger.net/web-security/learning-paths/sql-injection) (51 units), in order, mapped to where it's distilled here. Verified the path renders the same article text as the topic pages.
 
 | # | Path module | Covered in |
 |---|---|---|
 | 1 | What is SQL injection? | README (summary) + Basics-and-detection |
-| 2 | How to detect SQL injection vulnerabilities | Basics-and-detection → Find it |
+| 2 | How to detect SQL injection vulnerabilities | Basics-and-detection -> Find it |
 | 3 | Retrieving hidden data | Basics-and-detection (lab) |
 | 4 | Subverting application logic | Basics-and-detection (login-bypass lab) |
 | 5 | SQL injection UNION attacks | UNION-based |
@@ -52,36 +52,36 @@ Every module of the [SQL injection learning path](https://portswigger.net/web-se
 | 14 | Exploiting blind via time delays | Blind-time-based (2 labs) |
 | 15 | Exploiting blind using OAST | Out-of-band-OAST (2 labs) |
 | 16 | SQL injection in different contexts | WAF-filter-bypass (lab) |
-| 17 | Second-order SQL injection | Basics-and-detection → Technique → Second-order (below) |
+| 17 | Second-order SQL injection | Basics-and-detection -> Technique -> Second-order (below) |
 | 18 | How to prevent SQL injection | Prevention (below) |
 
 All 18 labs in the path are covered across the subfolders' `## Labs` sections.
 
 ### Second-order SQL injection (path module 17)
-Input is stored safely on one request, then later read and concatenated unsafely into a query elsewhere. Detection: plant `'`/`'--`/payloads in fields that get *stored and re-displayed/re-queried* (usernames, profile fields, registration), then trigger the second flow (view profile, admin report, order processing). The injection fires on the read, not the write — so a clean store ≠ safe. Treat any stored, attacker-controlled value that later feeds a query as injectable.
+Input is stored safely on one request, then later read and concatenated unsafely into a query elsewhere. Detection: plant `'`/`'--`/payloads in fields that get *stored and re-displayed/re-queried* (usernames, profile fields, registration), then trigger the second flow (view profile, admin report, order processing). The injection fires on the read, not the write - so a clean store ≠ safe. Treat any stored, attacker-controlled value that later feeds a query as injectable.
 
 ### Prevention (path module 18)
-Parameterized queries / prepared statements for ALL user-influenced query parts (not just `WHERE` — also `INSERT`/`UPDATE` values). Note: table/column names and `ORDER BY` can't be parameterized → use a strict allowlist. Least-privilege DB user; disable verbose errors in prod; defense-in-depth WAF (but never the sole control — see WAF-filter-bypass).
+Parameterized queries / prepared statements for ALL user-influenced query parts (not just `WHERE` - also `INSERT`/`UPDATE` values). Note: table/column names and `ORDER BY` can't be parameterized -> use a strict allowlist. Least-privilege DB user; disable verbose errors in prod; defense-in-depth WAF (but never the sole control - see WAF-filter-bypass).
 
 ## Guided study order (learning path)
-Follow the [SQL injection learning path](../_LEARNING-PATHS.md#single-topic-path--sql-injection-fully-mapped--reference-example) order: Basics-and-detection → UNION-based → Examining-the-database → Blind-boolean → Error-based → Blind-time-based → Out-of-band-OAST → WAF-filter-bypass. Mid-hunt, ignore order and jump via the decision map above.
+Follow the [SQL injection learning path](../_LEARNING-PATHS.md#single-topic-path--sql-injection-fully-mapped--reference-example) order: Basics-and-detection -> UNION-based -> Examining-the-database -> Blind-boolean -> Error-based -> Blind-time-based -> Out-of-band-OAST -> WAF-filter-bypass. Mid-hunt, ignore order and jump via the decision map above.
 
 ## Sub-technique folders
-- `Basics-and-detection/` — detection methodology, retrieving hidden data, login bypass (2 labs)
-- `UNION-based/` — column count, string-column discovery, cross-table dump, single-column concat (4 labs)
-- `Examining-the-database/` — version fingerprint + schema enumeration, incl. Oracle (4 labs)
-- `Blind-boolean/` — conditional responses & conditional errors (2 labs)
-- `Error-based/` — visible/verbose error data extraction via CAST (1 lab)
-- `Blind-time-based/` — time-delay inference + char extraction (2 labs)
-- `Out-of-band-OAST/` — DNS/HTTP exfil via Collaborator (2 labs)
-- `WAF-filter-bypass/` — XML-entity encoding to defeat keyword filters (1 lab)
+- `Basics-and-detection/` - detection methodology, retrieving hidden data, login bypass (2 labs)
+- `UNION-based/` - column count, string-column discovery, cross-table dump, single-column concat (4 labs)
+- `Examining-the-database/` - version fingerprint + schema enumeration, incl. Oracle (4 labs)
+- `Blind-boolean/` - conditional responses & conditional errors (2 labs)
+- `Error-based/` - visible/verbose error data extraction via CAST (1 lab)
+- `Blind-time-based/` - time-delay inference + char extraction (2 labs)
+- `Out-of-band-OAST/` - DNS/HTTP exfil via Collaborator (2 labs)
+- `WAF-filter-bypass/` - XML-entity encoding to defeat keyword filters (1 lab)
 
 ## Where SQLi lives in the query (not just WHERE)
-`WHERE` (SELECT) · `UPDATE` set values / WHERE · `INSERT` values · table/column name in `SELECT` · `ORDER BY` clause · `LIMIT`/`OFFSET`. Also: second-order — input stored safely, then later re-used in a query unsafely.
+`WHERE` (SELECT) - `UPDATE` set values / WHERE - `INSERT` values - table/column name in `SELECT` - `ORDER BY` clause - `LIMIT`/`OFFSET`. Also: second-order - input stored safely, then later re-used in a query unsafely.
 
 ## Chaining
-- SQLi → **auth bypass / account takeover** (dump creds → log in). See [Authentication](../Authentication/), [Access-control](../Access-control/).
-- Stacked queries / `xp_cmdshell` / `COPY ... TO PROGRAM` → **RCE**. See [OS-command-injection](../OS-command-injection/).
+- SQLi -> **auth bypass / account takeover** (dump creds -> log in). See [Authentication](../Authentication/), [Access-control](../Access-control/).
+- Stacked queries / `xp_cmdshell` / `COPY ... TO PROGRAM` -> **RCE**. See [OS-command-injection](../OS-command-injection/).
 - OAST exfil overlaps with [SSRF](../SSRF/) and [XXE](../XXE-injection/) primitives.
 - WAF-bypass-via-XML overlaps with [XXE-injection](../XXE-injection/) entity tricks.
 

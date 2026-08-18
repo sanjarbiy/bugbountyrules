@@ -1,6 +1,6 @@
-# Access control & privilege escalation — topic overview & router
+# Access control & privilege escalation - topic overview & router
 
-Access control decides whether an authenticated user may perform an action / reach a resource. Broken access control is the #1 OWASP risk and usually Critical: do admin actions as a normal user (vertical), read/modify other users' data (horizontal/IDOR), or chain horizontal→vertical to admin takeover.
+Access control decides whether an authenticated user may perform an action / reach a resource. Broken access control is the #1 OWASP risk and usually Critical: do admin actions as a normal user (vertical), read/modify other users' data (horizontal/IDOR), or chain horizontal->vertical to admin takeover.
 
 ## 30-second quick reference
 
@@ -27,9 +27,9 @@ add/remove Referer: .../admin                       # referer-based ACL bypass
 | Protection only on one step of a flow, or platform-level ACL | [Multi-step-and-context](Multi-step-and-context/) | replay the unprotected step; cross-account replay |
 
 ## Sub-technique folders
-- `Vertical-privilege-escalation/` — unprotected admin (robots/JS), role via cookie/param/profile, URL/method/Referer-based ACL bypass (7 labs)
-- `Horizontal-IDOR/` — user-id in param (+ unpredictable IDs, redirect leakage, password disclosure), insecure direct object references (5 labs)
-- `Multi-step-and-context/` — missing ACL on one step of a multi-step process (1 lab)
+- `Vertical-privilege-escalation/` - unprotected admin (robots/JS), role via cookie/param/profile, URL/method/Referer-based ACL bypass (7 labs)
+- `Horizontal-IDOR/` - user-id in param (+ unpredictable IDs, redirect leakage, password disclosure), insecure direct object references (5 labs)
+- `Multi-step-and-context/` - missing ACL on one step of a multi-step process (1 lab)
 
 ## Root cause
 Authorization checks are missing, incomplete, or rely on client-controllable data (cookies, params, hidden fields, URL, method, Referer) or "unguessable" URLs. The back-end trusts that the front-end already enforced access.
@@ -40,7 +40,7 @@ Authorization checks are missing, incomplete, or rely on client-controllable dat
 - Check `robots.txt`, JS, sitemaps for hidden admin URLs; check redirect/error bodies for leaked data.
 
 ## Chaining
-- Horizontal IDOR → password/API-key disclosure → **vertical** (admin) → full takeover.
+- Horizontal IDOR -> password/API-key disclosure -> **vertical** (admin) -> full takeover.
 - Pairs with [Authentication](../Authentication/) (post-ATO admin reach), [SQL-injection](../SQL-injection/)/[SSRF](../SSRF/) (reach internal admin), [Business-logic-vulnerabilities](../Business-logic-vulnerabilities/).
 
 ## Tools

@@ -7,7 +7,7 @@
 #
 # Needs ANTHROPIC_API_KEY in the environment. Model is overridable with
 # CI_PEER_MODEL. This exists so the LLM-judge scenarios can run in CI; locally,
-# point PEER at whatever agent CLI you already use (claude -p, agy, …).
+# point PEER at whatever agent CLI you already use (claude -p, agy, ...).
 set -euo pipefail
 
 prompt="${*: -1}"

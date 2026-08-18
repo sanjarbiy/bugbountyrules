@@ -84,8 +84,8 @@ elif dl > 1024:  bad.append(f"frontmatter description {dl} chars (>1024, some ru
 if bad:
     for b in bad: print("  \033[31mFAIL\033[0m " + b)
     sys.exit(1)
-print("  \033[32mok\033[0m   README index matches SKILL.md · links live · fences balanced")
-print("  \033[32mok\033[0m   evaluations TOC in sync · VRT JSON valid · description within limit")
+print("  \033[32mok\033[0m   README index matches SKILL.md - links live - fences balanced")
+print("  \033[32mok\033[0m   evaluations TOC in sync - VRT JSON valid - description within limit")
 PY
 
 # ------------------------------------------------------------------- script syntax
@@ -104,5 +104,5 @@ else
 fi
 
 echo
-if [ "$fail" -eq 0 ]; then echo "  ALL CHECKS PASSED"; else echo "  BUILD FAILED — fix the FAILs above"; fi
+if [ "$fail" -eq 0 ]; then echo "  ALL CHECKS PASSED"; else echo "  BUILD FAILED - fix the FAILs above"; fi
 exit "$fail"

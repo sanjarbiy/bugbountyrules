@@ -1,4 +1,4 @@
-# CSRF — topic overview & router
+# CSRF - topic overview & router
 
 Cross-Site Request Forgery tricks a victim's browser into making a state-changing request (change email, transfer funds, delete account) to a target site using the victim's cookies. Works because browsers attach cookies automatically to every request, even cross-origin ones (unless SameSite restrictions apply).
 
@@ -11,7 +11,7 @@ Cross-Site Request Forgery tricks a victim's browser into making a state-changin
 </form>
 <script>document.forms[0].submit()</script>
 
-<!-- Burp shortcut: right-click POST → Engagement tools → Generate CSRF PoC -->
+<!-- Burp shortcut: right-click POST -> Engagement tools -> Generate CSRF PoC -->
 
 <!-- SameSite cookie behavior -->
 # Strict = never sent cross-site (any request type)
@@ -21,7 +21,7 @@ Cross-Site Request Forgery tricks a victim's browser into making a state-changin
 <!-- Suppress Referer header -->
 <meta name="referrer" content="no-referrer">
 
-<!-- Broken Referer check — append lab domain as query param -->
+<!-- Broken Referer check - append lab domain as query param -->
 <!-- Use history.pushState to control Referer value -->
 <script>history.pushState('','','/?YOUR-LAB-ID.web-security-academy.net')</script>
 ```
@@ -37,9 +37,9 @@ Cross-Site Request Forgery tricks a victim's browser into making a state-changin
 | Referer header checked | [Referer-based-bypass](Referer-based-bypass/) | suppress header or inject lab domain into Referer value |
 
 ## Sub-technique folders
-- `Token-bypass/` — no token, method switch, missing token, cross-account token, non-session cookie, duplicated cookie (6 labs)
-- `SameSite-bypass/` — Lax method override, Strict client-side redirect, Strict sibling domain, Lax cookie refresh (4 labs)
-- `Referer-based-bypass/` — absent Referer accepted, broken substring validation (2 labs)
+- `Token-bypass/` - no token, method switch, missing token, cross-account token, non-session cookie, duplicated cookie (6 labs)
+- `SameSite-bypass/` - Lax method override, Strict client-side redirect, Strict sibling domain, Lax cookie refresh (4 labs)
+- `Referer-based-bypass/` - absent Referer accepted, broken substring validation (2 labs)
 
 ## Root cause
 Server trusts any request bearing the user's session cookie without requiring a secret unpredictable token; no Same-Origin Policy enforcement on outgoing requests (cookies attach cross-origin).
@@ -51,15 +51,15 @@ Server trusts any request bearing the user's session cookie without requiring a 
 - Check for Referer validation by dropping or modifying the Referer header.
 
 ## Chaining
-- CSRF → change email → trigger password reset → account takeover
-- XSS → read CSRF token from page → CSRF any endpoint (bypasses token defense)
-- Clickjacking → visually trick user into clicking CSRF trigger (same net effect as CSRF)
-- CSRF → change admin email → [Access-control](../Access-control/) admin panel
+- CSRF -> change email -> trigger password reset -> account takeover
+- XSS -> read CSRF token from page -> CSRF any endpoint (bypasses token defense)
+- Clickjacking -> visually trick user into clicking CSRF trigger (same net effect as CSRF)
+- CSRF -> change admin email -> [Access-control](../Access-control/) admin panel
 
 ## Tools
-- **Burp "Generate CSRF PoC"** (Professional) — right-click POST → Engagement tools
-- **Exploit server** — host PoC, deliver to victim, check access log
-- **Incognito window** — second account testing for cross-account token reuse
+- **Burp "Generate CSRF PoC"** (Professional) - right-click POST -> Engagement tools
+- **Exploit server** - host PoC, deliver to victim, check access log
+- **Incognito window** - second account testing for cross-account token reuse
 
 ## References
 - https://portswigger.net/web-security/csrf

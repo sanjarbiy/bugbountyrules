@@ -1,4 +1,4 @@
-# Web cache deception — topic overview & router
+# Web cache deception - topic overview & router
 
 Web Cache Deception (WCD) tricks a caching layer into storing a victim's sensitive, per-user response (API key, CSRF token, account page) at a URL that the attacker can then fetch publicly. The cache thinks it's a static file; the origin still served the authenticated response.
 
@@ -17,22 +17,22 @@ Web Cache Deception (WCD) tricks a caching layer into storing a victim's sensiti
 ## 30-second quick reference
 
 ```
-# Type 1 — Path mapping (origin abstracts path)
+# Type 1 - Path mapping (origin abstracts path)
 /my-account/wcd.js
    origin: serves /my-account  (ignores extra segments)
    cache:  stores .js extension  ->  X-Cache: hit
 
-# Type 2 — Delimiter discrepancy (origin uses ; cache doesn't)
+# Type 2 - Delimiter discrepancy (origin uses ; cache doesn't)
 /my-account;wcd.js
    origin: ; is delimiter  ->  serves /my-account
    cache:  no ; handling  ->  sees /my-account;wcd.js, matches .js rule  ->  stores it
 
-# Type 3 — Origin normalization (origin decodes ..%2f, cache doesn't)
+# Type 3 - Origin normalization (origin decodes ..%2f, cache doesn't)
 /resources/..%2fmy-account
    origin: decodes ..%2f  ->  serves /my-account
    cache:  doesn't normalize  ->  sees /resources/... path  ->  matches /resources prefix rule  ->  stores it
 
-# Type 4 — Cache normalization (cache decodes ..%2f, origin doesn't)
+# Type 4 - Cache normalization (cache decodes ..%2f, origin doesn't)
 /my-account%23%2f%2e%2e%2fresources
    origin: %23 is delimiter  ->  serves /my-account
    cache:  normalizes %2f%2e%2e%2f  ->  resolves to /resources prefix  ->  matches rule  ->  stores it
@@ -78,27 +78,27 @@ Step 4: Normalization check (if delimiters all fail or cache also uses them)
 | Cache normalizes; exact-match rule (/robots.txt) | [Cache-normalization](Cache-normalization/) | /my-account;%2f%2e%2e%2frobots.txt |
 
 ## Sub-technique folders
-- `Path-mapping-and-delimiters/` — origin abstracts path, delimiter discrepancy, origin normalization (3 labs)
-- `Cache-normalization/` — cache decodes dot-segments the origin doesn't; exact-match cache rules (2 labs)
+- `Path-mapping-and-delimiters/` - origin abstracts path, delimiter discrepancy, origin normalization (3 labs)
+- `Cache-normalization/` - cache decodes dot-segments the origin doesn't; exact-match cache rules (2 labs)
 
 ## Root cause
 Cache and origin server parse URLs differently. The cache decides "is this cacheable?" based on the URL; the origin decides "what content to serve?" If their URL parsing disagrees (on path segments, delimiters, or encoded dot-segments), an attacker can craft a URL that the cache treats as static (caches it) but the origin treats as a dynamic sensitive endpoint (serves authenticated data).
 
 ## Find it
 - Any authenticated endpoint that returns per-user data (account page, API key endpoint, profile).
-- Any site with `X-Cache` response headers → a caching layer is present.
-- Check `Cache-Control: no-store` / `Vary: Cookie` — if absent or misconfigured → cacheable.
+- Any site with `X-Cache` response headers -> a caching layer is present.
+- Check `Cache-Control: no-store` / `Vary: Cookie` - if absent or misconfigured -> cacheable.
 
 ## Chaining
-- WCD + API key → account takeover without credentials
-- WCD + CSRF token → CSRF attack bypassing CSRF defenses → email/password change
-- WCD + [CSRF](../CSRF/) → full account compromise even on CSRF-protected apps
-- WCD + [Authentication](../Authentication/) bypass → admin takeover
+- WCD + API key -> account takeover without credentials
+- WCD + CSRF token -> CSRF attack bypassing CSRF defenses -> email/password change
+- WCD + [CSRF](../CSRF/) -> full account compromise even on CSRF-protected apps
+- WCD + [Authentication](../Authentication/) bypass -> admin takeover
 
 ## Tools
-- **Burp Repeater** — test each URL variant, check X-Cache header
-- **Burp Intruder** — Sniper attack to brute delimiter characters (deselect URL-encode!)
-- **Exploit server** — deliver `<script>document.location=...</script>` to victim
+- **Burp Repeater** - test each URL variant, check X-Cache header
+- **Burp Intruder** - Sniper attack to brute delimiter characters (deselect URL-encode!)
+- **Exploit server** - deliver `<script>document.location=...</script>` to victim
 
 ## References
 - https://portswigger.net/web-security/web-cache-deception

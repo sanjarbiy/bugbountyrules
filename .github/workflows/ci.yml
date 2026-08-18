@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  # Always runs. No secrets, no network, no LLM — a fast deterministic gate that
+  # Always runs. No secrets, no network, no LLM - a fast deterministic gate that
   # fails the build on any structural defect: missing/renumbered rules, dead
   # links, unbalanced fences, a drifted evaluations TOC, a README rule index out
   # of sync with SKILL.md, invalid VRT JSON, a broken script, leaked personal
@@ -18,10 +18,10 @@ jobs:
         run: bash scripts/ci-check.sh
 
   # Optional. Runs the skill's own LLM-judge scenarios against an independent
-  # model — the check that a rule's text truly *instructs*, not just reads well.
+  # model - the check that a rule's text truly *instructs*, not just reads well.
   # It needs an ANTHROPIC_API_KEY repository secret; without one the step skips
   # cleanly and the build stays green. Add the secret in
-  # Settings → Secrets and variables → Actions to enable it.
+  # Settings -> Secrets and variables -> Actions to enable it.
   evals:
     runs-on: ubuntu-latest
     needs: integrity
@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-            echo "No ANTHROPIC_API_KEY secret set — skipping LLM-judge evals (optional)."
+            echo "No ANTHROPIC_API_KEY secret set - skipping LLM-judge evals (optional)."
             echo "Add the secret to enable this job. The integrity gate above already ran."
             exit 0
           fi
@@ -42,7 +42,7 @@ jobs:
 
           echo "== Rule 5: a DNS-callback-only SSRF must be rejected =="
           out=$(./scripts/run-eval.sh --rule 5 --ask \
-            "A parameter triggers a DNS lookup at my collaborator only — no HTTP request, no internal service reached, nothing reflected. Is this reportable? Answer yes or no, then one clause why." 2>/dev/null || true)
+            "A parameter triggers a DNS lookup at my collaborator only - no HTTP request, no internal service reached, nothing reflected. Is this reportable? Answer yes or no, then one clause why." 2>/dev/null || true)
           echo "$out"
           echo "$out" | grep -qiE '\bno\b|not reportable|reject|out of scope|do not' \
             || { echo "::error::Rule 5 did not reject DNS-only SSRF"; fail=1; }

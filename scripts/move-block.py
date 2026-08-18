@@ -22,9 +22,9 @@ def toc_gaps(path):
     A moved block absent from Contents is a block nobody finds, so this must be
     checked. But it is only ever REPORTED, never auto-fixed: a Contents entry is
     free prose that may describe a level-3 section in words matching no heading
-    ("Observation → vector catalogue" for a section titled "If→Then→Try
+    ("Observation -> vector catalogue" for a section titled "If->Then->Try
     catalogue"). Any rule confident enough to rewrite that list is confident
-    enough to delete a good entry — which is how this file lost one. Print the
+    enough to delete a good entry - which is how this file lost one. Print the
     gap and let a human place it.
     """
     lines = open(path, encoding="utf-8").read().splitlines()
@@ -48,7 +48,7 @@ def main():
     if len(sys.argv) == 3 and sys.argv[1] == "--toc-gaps":
         g = toc_gaps(os.path.join(ROOT, sys.argv[2]))
         print(f"  {sys.argv[2]}: " + ("Contents complete" if not g
-              else f"{len(g)} section(s) NOT in Contents — add by hand:"))
+              else f"{len(g)} section(s) NOT in Contents - add by hand:"))
         for t in g:
             print(f"      - {t}")
         return
@@ -77,24 +77,24 @@ def main():
         sys.exit("block resolved to nothing")
 
     # A block that starts with a heading keeps it. A block that starts with a
-    # PARAGRAPH must not become a paragraph-length heading — that pollutes the
+    # PARAGRAPH must not become a paragraph-length heading - that pollutes the
     # file and every Contents list generated from it.
     if block[0].lstrip().startswith("#"):
         title = block[0].lstrip("#").strip()
     else:
         plain = re.sub(r"\*\*|\*|`", "", block[0]).strip()
-        title = (plain[:57].rsplit(" ", 1)[0] + "…") if len(plain) > 60 else plain
+        title = (plain[:57].rsplit(" ", 1)[0] + "...") if len(plain) > 60 else plain
     title = title or "moved block"
     with open(refp, "a", encoding="utf-8") as f:
         f.write("\n\n---\n\n## " + re.sub(r"^#+\s*", "", title) + "\n"
-                "*Moved verbatim from SKILL.md — the mandate stays there, the worked detail lives here.*\n\n")
+                "*Moved verbatim from SKILL.md - the mandate stays there, the worked detail lives here.*\n\n")
         f.writelines(block if not block[0].startswith("#") else block[1:])
         f.write("\n")
 
     lines[s:e] = [pointer.rstrip() + "\n", "\n"]
     open(SKILL, "w", encoding="utf-8").write("".join(lines))
     print(f"  moved {len(block)} lines -> {ref}   (SKILL.md now {len(lines)} lines)")
-    for t in toc_gaps(refp):   # report, do not touch — see toc_gaps docstring
+    for t in toc_gaps(refp):   # report, do not touch - see toc_gaps docstring
         print(f"  ADD TO {ref} Contents BY HAND:  - {t}")
 
 

