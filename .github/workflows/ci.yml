@@ -1,0 +1,57 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Always runs. No secrets, no network, no LLM — a fast deterministic gate that
+  # fails the build on any structural defect: missing/renumbered rules, dead
+  # links, unbalanced fences, a drifted evaluations TOC, a README rule index out
+  # of sync with SKILL.md, invalid VRT JSON, a broken script, leaked personal
+  # data, or a description a runtime would truncate.
+  integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deterministic integrity gate
+        run: bash scripts/ci-check.sh
+
+  # Optional. Runs the skill's own LLM-judge scenarios against an independent
+  # model — the check that a rule's text truly *instructs*, not just reads well.
+  # It needs an ANTHROPIC_API_KEY repository secret; without one the step skips
+  # cleanly and the build stays green. Add the secret in
+  # Settings → Secrets and variables → Actions to enable it.
+  evals:
+    runs-on: ubuntu-latest
+    needs: integrity
+    steps:
+      - uses: actions/checkout@v4
+      - name: LLM-judge evaluations
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+            echo "No ANTHROPIC_API_KEY secret set — skipping LLM-judge evals (optional)."
+            echo "Add the secret to enable this job. The integrity gate above already ran."
+            exit 0
+          fi
+          export PEER="bash scripts/ci-peer.sh"
+          fail=0
+
+          echo "== Rule 5: a DNS-callback-only SSRF must be rejected =="
+          out=$(./scripts/run-eval.sh --rule 5 --ask \
+            "A parameter triggers a DNS lookup at my collaborator only — no HTTP request, no internal service reached, nothing reflected. Is this reportable? Answer yes or no, then one clause why." 2>/dev/null || true)
+          echo "$out"
+          echo "$out" | grep -qiE '\bno\b|not reportable|reject|out of scope|do not' \
+            || { echo "::error::Rule 5 did not reject DNS-only SSRF"; fail=1; }
+
+          echo "== Rule 26: a self-XSS must not be rated critical =="
+          out=$(./scripts/run-eval.sh --rule 26 --ask \
+            "Rate this: a self-XSS that only fires in my own browser on my own profile, no cross-user delivery. I think it is critical. Give a severity." 2>/dev/null || true)
+          echo "$out"
+          echo "$out" | grep -qiE 'not (a finding|reportable|critical)|self-?xss|no (impact|severity)|informational|reject' \
+            || { echo "::error::Rule 26 accepted a self-XSS as a real/critical finding"; fail=1; }
+
+          [ "$fail" -eq 0 ] && echo "LLM-judge evals passed." || { echo "One or more evals failed."; exit 1; }
